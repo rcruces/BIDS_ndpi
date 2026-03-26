@@ -1,0 +1,201 @@
+{
+  "name": "ndpi2bids",
+  "tool-version": "0.1.0",
+  "container-image": {
+    "image": "MICA-MNI/bids_ndpi:0.1.0",
+    "index": "docker://",
+    "type": "singularity"
+  },
+  "schema-version": "0.5",
+  "author":         "Raul R. Cruces @ Multimodal Imaging and Connectome Analysis (MICA) Lab ",
+  "url": "https://github.com/MICA-MNI/BIDS_ndpi",
+  "description": "Converts a Hamamatsu NDPI whole-slide image to a BIDS-compliant microscopy dataset, generating the required JSON sidecar and updating participants metadata.",
+  "command-line": "python ndpi2bids/ndpi2bids.py --ndpi_path [NDPI_PATH] --bids [BIDS] --sub [SUB] --stain [STAIN] --suffix [SUFFIX] [SES] [SAMPLE] [ACQ] [RUN] [CHUNK] [TEMPLATE] [CONVERT] [DRY_RUN] [FORCE]",
+  "inputs": [
+    {
+      "id": "ndpi_path",
+      "name": "NDPI file path",
+      "description": "Path to the raw Hamamatsu .ndpi file to convert.",
+      "type": "File",
+      "optional": false,
+      "command-line-flag": "--ndpi_path",
+      "value-key": "[NDPI_PATH]"
+    },
+    {
+      "id": "bids",
+      "name": "BIDS root directory",
+      "description": "Path to the root of the BIDS dataset. Will be created if it does not exist.",
+      "type": "String",
+      "optional": false,
+      "command-line-flag": "--bids",
+      "value-key": "[BIDS]"
+    },
+    {
+      "id": "sub",
+      "name": "Subject ID",
+      "description": "BIDS subject label, without the 'sub-' prefix (e.g., PX067).",
+      "type": "String",
+      "optional": false,
+      "command-line-flag": "--sub",
+      "value-key": "[SUB]"
+    },
+    {
+      "id": "stain",
+      "name": "Stain entity",
+      "description": "BIDS stain entity label (e.g., AT8, DAPI, LFB).",
+      "type": "String",
+      "optional": false,
+      "command-line-flag": "--stain",
+      "value-key": "[STAIN]"
+    },
+    {
+      "id": "suffix",
+      "name": "BIDS suffix",
+      "description": "BIDS filename suffix indicating acquisition modality (e.g., BF for brightfield, FL for fluorescence).",
+      "type": "String",
+      "optional": false,
+      "command-line-flag": "--suffix",
+      "value-key": "[SUFFIX]"
+    },
+    {
+      "id": "ses",
+      "name": "Session ID",
+      "description": "BIDS session label, without the 'ses-' prefix.",
+      "type": "String",
+      "optional": true,
+      "command-line-flag": "--ses",
+      "value-key": "[SES]"
+    },
+    {
+      "id": "sample",
+      "name": "Sample ID",
+      "description": "BIDS sample entity label, without the 'sample-' prefix (e.g., NP24709).",
+      "type": "String",
+      "optional": true,
+      "command-line-flag": "--sample",
+      "value-key": "[SAMPLE]"
+    },
+    {
+      "id": "acq",
+      "name": "Acquisition label",
+      "description": "BIDS acquisition label, without the 'acq-' prefix.",
+      "type": "String",
+      "optional": true,
+      "command-line-flag": "--acq",
+      "value-key": "[ACQ]"
+    },
+    {
+      "id": "run",
+      "name": "Run index",
+      "description": "BIDS run index (integer), without the 'run-' prefix.",
+      "type": "Number",
+      "optional": true,
+      "integer": true,
+      "minimum": 1,
+      "command-line-flag": "--run",
+      "value-key": "[RUN]"
+    },
+    {
+      "id": "chunk",
+      "name": "Chunk label",
+      "description": "BIDS chunk entity label, without the 'chunk-' prefix (e.g., A3).",
+      "type": "String",
+      "optional": true,
+      "command-line-flag": "--chunk",
+      "value-key": "[CHUNK]"
+    },
+    {
+      "id": "template",
+      "name": "Metadata JSON template",
+      "description": "Path to a JSON template file for sidecar metadata. Overrides built-in defaults.",
+      "type": "File",
+      "optional": true,
+      "command-line-flag": "--template",
+      "value-key": "[TEMPLATE]"
+    },
+    {
+      "id": "convert",
+      "name": "Convert to OME-TIFF",
+      "description": "If set, convert the NDPI file to OME-TIFF using bfconvert before placing it in the BIDS tree.",
+      "type": "Flag",
+      "optional": true,
+      "command-line-flag": "--convert",
+      "value-key": "[CONVERT]"
+    },
+    {
+      "id": "dry_run",
+      "name": "Dry run",
+      "description": "Print intended actions without writing any files or converting any data.",
+      "type": "Flag",
+      "optional": true,
+      "command-line-flag": "--dry_run",
+      "value-key": "[DRY_RUN]"
+    },
+    {
+      "id": "force",
+      "name": "Force overwrite",
+      "description": "Overwrite existing BIDS output files and sidecars if they already exist.",
+      "type": "Flag",
+      "optional": true,
+      "command-line-flag": "--force",
+      "value-key": "[FORCE]"
+    }
+  ],
+  "output-files": [
+    {
+      "id": "bids_output",
+      "name": "BIDS output directory",
+      "description": "Root of the BIDS dataset populated by the conversion.",
+      "path-template": "[BIDS]",
+      "optional": false
+    }
+  ],
+  "groups": [
+    {
+      "id": "required_bids",
+      "name": "Mandatory BIDS arguments",
+      "members": ["ndpi_path", "bids", "sub", "stain", "suffix"],
+      "all-or-none": false
+    },
+    {
+      "id": "optional_entities",
+      "name": "Optional BIDS entities",
+      "members": ["ses", "sample", "acq", "run", "chunk", "template"],
+      "all-or-none": false
+    },
+    {
+      "id": "operational_flags",
+      "name": "Operational flags",
+      "members": ["convert", "dry_run", "force"],
+      "all-or-none": false,
+      "mutually-exclusive": false
+    }
+  ],
+  "tags": {
+    "domain": "neuroinformatics",
+    "topic": ["BIDS", "microscopy", "whole-slide-imaging", "histology", "NDPI"]
+  },
+  "suggested-resources": {
+    "cpu-cores": 2,
+    "ram": 8,
+    "walltime-estimate": 300
+  },
+  "error-codes": [
+    {
+      "code": 1,
+      "description": "Input NDPI file not found or unreadable."
+    },
+    {
+      "code": 2,
+      "description": "BIDS output directory could not be created."
+    },
+    {
+      "code": 3,
+      "description": "bfconvert failed during OME-TIFF conversion."
+    },
+    {
+      "code": 4,
+      "description": "Output file already exists and --force was not set."
+    }
+  ]
+}

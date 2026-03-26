@@ -1,0 +1,48 @@
+# schema: https://github.com/citation-file-format/citation-file-format/blob/main/schema-guide.md
+
+cff-version: 1.2.0
+
+title: MICA BIDS microscopy
+
+license: CC0-1.0
+
+type: "software"
+
+repository-code: https://github.com/MICA-MNI/ndpi2bids
+
+message: Data collection of [18F]-mk6240 Tau-PET from the MICA lab, Brain Imaging Center, Montreal Neurologial Institute and Hospital (The Neuro).
+
+identifiers:
+  - description: "The concept DOI of the pre-release version."
+    type: doi
+    value: 10.0000/zenodo.0000000s
+
+keywords:
+  - dataset
+  - tau
+  - pet
+  - MRI
+  - 18f-mk6240
+  - healthy
+  - open data
+  - brain imaging data structure
+  - BIDS
+  - neuroscience
+  - neuroimaging
+  - neuroinformatics
+
+authors:
+
+  - family-names: R. Cruces
+    given-names: Raul
+    orcid: https://orcid.org/0000-0001-8002-0877
+
+  - family-names: Daniel
+    given-names: Mendelsson
+
+  - family-names: Guiou
+    given-names: Marie Cristine
+
+  - family-names: Bernhardt
+    given-names: Boris
+    orcid: https://orcid.org/0000-0001-9256-6041

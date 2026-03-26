@@ -1,0 +1,16 @@
+name: bids_ndpi
+channels:
+  - conda-forge
+  - defaults
+ 
+dependencies:
+  - python=3.11
+ 
+  # Whole-slide image I/O
+  - tifffile>=2023.7.10
+ 
+  # stdlib used: os, json, shutil, argparse, subprocess, logging, xml.etree.ElementTree
+ 
+# NOTE: bfconvert (Bio-Formats) is a Java CLI tool installed at the system level
+# in the Dockerfile — it is not a Python package and is invoked via subprocess.
+ 
