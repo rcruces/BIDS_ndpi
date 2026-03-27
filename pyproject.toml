@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "ndpi2bids"
+version = "0.1.0"
+description = "Convert Hamamatsu NDPI whole-slide images to BIDS-compliant microscopy datasets"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Raul R. Cruces", email = "raul.rodriguezcruces@mcgill.ca" }
+]
+keywords = ["BIDS", "NDPI", "whole-slide imaging", "microscopy", "neuroimaging", "histology"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "Topic :: Scientific/Engineering :: Image Processing",
+]
+requires-python = ">=3.11"
+
+# ── Python dependencies only ───────────────────────────────────────────────────
+# bfconvert (Bio-Formats) is a Java CLI tool and CANNOT be installed via pip.
+# It is required only when using --convert. See README for installation instructions.
+dependencies = [
+    "tifffile>=2023.7.10",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+]
+
+[project.scripts]
+# Installs `ndpi2bids` as a command-line entry point after `pip install ndpi2bids`
+ndpi2bids = "ndpi2bids.ndpi2bids:main"
+
+[project.urls]
+Homepage   = "https://github.com/rcruces/BIDS_ndpi"
+Repository = "https://github.com/rcruces/BIDS_ndpi"
+Issues     = "https://github.com/rcruces/BIDS_ndpi/issues"
+Changelog  = "https://github.com/rcruces/BIDS_ndpi/blob/main/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+where   = ["."]
+include = ["ndpi2bids*"]
+
+[tool.setuptools.package-data]
+# templates/ lives inside the ndpi2bids
+ndpi2bids = [
+    "templates/*.json",
+]

@@ -10,7 +10,7 @@ type: "software"
 
 repository-code: https://github.com/MICA-MNI/ndpi2bids
 
-message: Data collection of [18F]-mk6240 Tau-PET from the MICA lab, Brain Imaging Center, Montreal Neurologial Institute and Hospital (The Neuro).
+message: Data collection of microscopy images from the MICA lab, Brain Imaging Center, Montreal Neurologial Institute and Hospital (The Neuro).
 
 identifiers:
   - description: "The concept DOI of the pre-release version."
@@ -19,17 +19,15 @@ identifiers:
 
 keywords:
   - dataset
-  - tau
-  - pet
-  - MRI
-  - 18f-mk6240
-  - healthy
+  - AT8
+  - epilepsy
+  - immunohistochemistry
+  - microscopy
   - open data
   - brain imaging data structure
   - BIDS
   - neuroscience
   - neuroimaging
-  - neuroinformatics
 
 authors:
 

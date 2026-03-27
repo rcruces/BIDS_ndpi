@@ -72,9 +72,9 @@ class BIDS_micr_metadata:
             "BitsPerPixel": None,
 
             # Institution
-            "InstitutionName": "Montreal Neurological Institute, McGill University", 
-            "InstitutionAddress": "3801 University St, Montreal, Quebec H3A 2B4, Canada", 
-            "InstitutionalDepartmentName": "Neuropathology"
+            "InstitutionName": None, 
+            "InstitutionAddress": None, 
+            "InstitutionalDepartmentName": None
         }
 
     def fill_from_ndpi(self):
