@@ -4,7 +4,8 @@
   "InstitutionalDepartmentName": "Neuropathology",
 
   "Immersion": "Air",
-  "NumericalAperture": null,
+  "Magnification": 20,
+  "NumericalAperture": 0.75,
   "ImageAcquisitionProtocol": "Antigen retrieval CC1 buffer (24 min cumulative at 91 °C) on Ventana Discovery Ultra. Indirect colorimetric detection. Clearing: 95% ethanol, 100% ethanol, xylene.",
   "OtherAcquisitionParameters": "Digitized at 20x; interpreted by expert neuropathologist",
 

@@ -95,7 +95,7 @@ class BIDS_micr_metadata:
         """Extract pre-selected keys from NDPI file headers.
 
         Populates: Manufacturer, ManufacturersModelName, PixelSize,
-        NumericalAperture, PixelSizeUnits, Magnification,
+        PixelSizeUnits, Magnification,
         ImageAcquisitionProtocol, ScanTimeSeconds, FocusTimeSeconds,
         Software, DateAcquired, Compression, BitsPerPixel
         """
@@ -160,31 +160,6 @@ class BIDS_micr_metadata:
             # BIDS requires µm
             self.metadata["PixelSizeUnits"] = "um"
 
-            # ---- NumericalAperture ----
-            try:
-                if tif.ome_metadata:
-                    root = ET.fromstring(tif.ome_metadata.strip())
-                    obj = root.find(".//{*}Objective")
-                    if obj is not None:
-                        na = obj.get('LensNA')
-                        if na:
-                            self.metadata["NumericalAperture"] = float(na)
-            except Exception:
-                pass
-
-            if not self.metadata.get("NumericalAperture") and ndpi_info:
-                self.metadata["NumericalAperture"] = (
-                    ndpi_info.get('NA') or ndpi_info.get('NumericalAperture')
-                )
-
-            if not self.metadata.get("NumericalAperture") and desc_str:
-                na_match = re.search(
-                    r'(?:NA|N\.A\.|Numerical\s?Aperture)[:\s=]+([0-9\.]+)',
-                    desc_str, re.IGNORECASE,
-                )
-                if na_match:
-                    self.metadata["NumericalAperture"] = float(na_match.group(1))
-
             # ---- Magnification ----
             mag = ndpi_info.get('Magnification')
             if mag is not None:
@@ -217,6 +192,39 @@ class BIDS_micr_metadata:
         """Writes the dictionary to a BIDS-compliant JSON file."""
         with open(output_path, 'w') as f:
             json.dump(self.metadata, f, indent=4)
+
+# --- BIDS Root Files ---
+
+_BIDSIGNORE_CONTENT = """# Ignore log directories and validation output
+**/log/
+bids_validator_output.txt
+"""
+
+def ensure_bids_root_files(bids_root):
+    """Create mandatory BIDS root files (.bidsignore, dataset_description.json) if missing."""
+    # .bidsignore
+    bidsignore_path = os.path.join(bids_root, ".bidsignore")
+    if not os.path.exists(bidsignore_path):
+        with open(bidsignore_path, "w") as f:
+            f.write(_BIDSIGNORE_CONTENT)
+
+    # dataset_description.json
+    dd_path = os.path.join(bids_root, "dataset_description.json")
+    if not os.path.exists(dd_path):
+        template = os.path.join(
+            os.path.dirname(__file__), "templates", "dataset_description.json"
+        )
+        if os.path.isfile(template):
+            shutil.copy2(template, dd_path)
+        else:
+            # Minimal valid dataset_description.json
+            dd = {
+                "Name": "BIDS Microscopy Dataset",
+                "BIDSVersion": "2.0.3",
+                "DatasetType": "raw",
+            }
+            with open(dd_path, "w") as f:
+                json.dump(dd, f, indent=4)
 
 # --- Execution Script ---
 
@@ -263,6 +271,10 @@ def main():
     bids_namer = BIDS_micr_name(**entities)
     bids_rel_path = bids_namer.build()
     full_bids_base = os.path.join(args.bids, bids_rel_path)
+
+    # Ensure mandatory BIDS root files exist
+    os.makedirs(args.bids, exist_ok=True)
+    ensure_bids_root_files(args.bids)
 
     target_ndpi = f"{full_bids_base}.ndpi"
     target_json = f"{full_bids_base}.json"
@@ -350,6 +362,9 @@ def main():
                 )
                 if result.returncode == 0:
                     logging.info(f"Conversion: Success -> {target_ome}")
+                    # Remove the NDPI copy to avoid data duplication
+                    os.remove(target_ndpi)
+                    logging.info(f"Conversion: Removed duplicate NDPI -> {target_ndpi}")
                 else:
                     logging.error(f"Conversion: Failed -> {result.stderr}")
 
