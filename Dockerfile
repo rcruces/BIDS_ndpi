@@ -44,7 +44,7 @@ WORKDIR /app
 # ── Install Python dependencies ───────────────────────────────────────────────
 COPY pyproject.toml .
 COPY ndpi2bids/ ./ndpi2bids/
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir --root-user-action=ignore --disable-pip-version-check .
 
 # ── Default command ────────────────────────────────────────────────────────────
 ENTRYPOINT ["python", "-m", "ndpi2bids.ndpi2bids"]
