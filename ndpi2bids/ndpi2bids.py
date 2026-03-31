@@ -13,8 +13,8 @@ Microscopy-BIDS: an extension to the brain imaging data structure for microscopy
 https://doi.org/10.3389/fnins.2022.871228
 """
 
-from html import parser
 import os
+import re
 import json
 import shutil
 import argparse
@@ -53,11 +53,11 @@ class BIDS_micr_name:
 
 class BIDS_micr_metadata:
     """Extracts and stores BIDS metadata for microscopy."""
-    def __init__(self, ndpi_path):
+    def __init__(self, ndpi_path, template_path=None, **kwargs):
         self.path = ndpi_path
-        self.metadata = {            
-            # Get from metadata
-            # Note pixel units MUST be µm
+
+        # Keys that will be filled from NDPI file headers
+        self.metadata = {
             "Manufacturer": None,
             "ManufacturersModelName": None,
             "PixelSize": None,
@@ -70,19 +70,61 @@ class BIDS_micr_metadata:
             "DateAcquired": None,
             "Compression": None,
             "BitsPerPixel": None,
-
-            # Institution
-            "InstitutionName": None, 
-            "InstitutionAddress": None, 
-            "InstitutionalDepartmentName": None
         }
 
+        # Load remaining keys from template JSON
+        if template_path is None:
+            template_path = os.path.join(
+                os.path.dirname(__file__), "templates", "stain-AT8_BF.json"
+            )
+        if os.path.isfile(template_path):
+            with open(template_path, "r") as f:
+                template_data = json.load(f)
+            # Template values fill in keys not already defined above
+            for key, value in template_data.items():
+                if key not in self.metadata:
+                    self.metadata[key] = value
+                elif self.metadata[key] is None and value is not None:
+                    self.metadata[key] = value
+
+        # Override any metadata value with user-supplied kwargs
+        for key, value in kwargs.items():
+            self.metadata[key] = value
+
     def fill_from_ndpi(self):
-        """Deep search extraction for stubborn metadata fields."""
+        """Extract pre-selected keys from NDPI file headers.
+
+        Populates: Manufacturer, ManufacturersModelName, PixelSize,
+        NumericalAperture, PixelSizeUnits, Magnification,
+        ImageAcquisitionProtocol, ScanTimeSeconds, FocusTimeSeconds,
+        Software, DateAcquired, Compression, BitsPerPixel
+        """
         with tifffile.TiffFile(self.path) as tif:
             page = tif.pages[0]
-            
-            # 1. Standard OME-XML Wildcard
+
+            # ------ helper: flat dict from all NDPI custom tags ------
+            ndpi_info = getattr(tif, 'ndpi_tags', {})
+
+            # ------ helper: ImageDescription text ------
+            desc_tag = page.tags.get('ImageDescription')
+            desc_str = str(desc_tag.value) if desc_tag else ""
+
+            # ---- Manufacturer & Model ----
+            make_tag = page.tags.get('Make')
+            if make_tag:
+                self.metadata["Manufacturer"] = str(make_tag.value).strip()
+            model_tag = page.tags.get('Model')
+            if model_tag:
+                self.metadata["ManufacturersModelName"] = str(model_tag.value).strip()
+
+            # ---- Software ----
+            sw_tag = page.tags.get('Software')
+            if sw_tag:
+                self.metadata["Software"] = str(sw_tag.value).strip()
+            elif ndpi_info.get('Software'):
+                self.metadata["Software"] = ndpi_info['Software']
+
+            # ---- PixelSize (µm) from OME-XML ----
             try:
                 if tif.ome_metadata:
                     root = ET.fromstring(tif.ome_metadata.strip())
@@ -90,55 +132,86 @@ class BIDS_micr_metadata:
                     if pixels is not None:
                         self.metadata["PixelSize"] = [
                             round(float(pixels.get('PhysicalSizeX', 0)), 4),
-                            round(float(pixels.get('PhysicalSizeY', 0)), 4)
+                            round(float(pixels.get('PhysicalSizeY', 0)), 4),
                         ]
-                    
-                    obj = root.find(".//{*}Objective")
-                    if obj is not None:
-                        na = obj.get('LensNA')
-                        if na: self.metadata["NumericalAperture"] = float(na)
-            except: pass
+            except Exception:
+                pass
 
-            # 2. Proprietary NDPI Tags Search
-            ndpi_info = getattr(tif, 'ndpi_tags', {})
-            if ndpi_info:
-                # Some scanners store it directly in this dict
-                if not self.metadata["NumericalAperture"]:
-                    self.metadata["NumericalAperture"] = ndpi_info.get('NA') or ndpi_info.get('NumericalAperture')
-                
-                if not self.metadata["PixelSize"] and 'Distance' in ndpi_info:
-                    psize = round(float(ndpi_info['Distance']) / 1000.0, 4)
-                    self.metadata["PixelSize"] = [psize, psize]
+            # ---- PixelSize fallback: NDPI Distance tag ----
+            if not self.metadata["PixelSize"] and ndpi_info.get('Distance'):
+                psize = round(float(ndpi_info['Distance']) / 1000.0, 4)
+                self.metadata["PixelSize"] = [psize, psize]
 
-            # 3. Broader Regex for ImageDescription
-            # Handles "NA: 0.75", "N.A. 0.75", "NumericalAperture=0.75", etc.
-            desc = page.tags.get('ImageDescription')
-            if desc and not self.metadata["NumericalAperture"]:
-                desc_str = str(desc.value)
-                # Regex: Look for variations of NA followed by a float
-                na_match = re.search(r'(?:NA|N\.A\.|Numerical\s?Aperture)[:\s=]+([0-9\.]+)', desc_str, re.IGNORECASE)
-                if na_match:
-                    self.metadata["NumericalAperture"] = float(na_match.group(1))
-
-            # 4. Brute-force TIFF Tag Scan (Last Resort)
-            if not self.metadata["NumericalAperture"]:
-                for tag in page.tags:
-                    tag_data = str(tag.value)
-                    if "NA" in tag_data or "Aperture" in tag_data:
-                        na_match = re.search(r'([0-9]\.[0-9]{2})', tag_data)
-                        if na_match:
-                            self.metadata["NumericalAperture"] = float(na_match.group(1))
-                            break
-
-            # 5. Resolution Fallback for PixelSize
+            # ---- PixelSize fallback: TIFF resolution tags ----
             if not self.metadata["PixelSize"]:
                 x_res = page.tags.get('XResolution')
                 unit = page.tags.get('ResolutionUnit')
                 if x_res and unit:
                     res_val = x_res.value[0] / x_res.value[1]
-                    if unit.value == 3: psize = 10000.0 / res_val
-                    elif unit.value == 2: psize = 25400.0 / res_val
-                    self.metadata["PixelSize"] = [round(psize, 4), round(psize, 4)]
+                    if unit.value == 3:
+                        psize = 10000.0 / res_val
+                    elif unit.value == 2:
+                        psize = 25400.0 / res_val
+                    else:
+                        psize = None
+                    if psize is not None:
+                        self.metadata["PixelSize"] = [round(psize, 4), round(psize, 4)]
+
+            # BIDS requires µm
+            self.metadata["PixelSizeUnits"] = "um"
+
+            # ---- NumericalAperture ----
+            try:
+                if tif.ome_metadata:
+                    root = ET.fromstring(tif.ome_metadata.strip())
+                    obj = root.find(".//{*}Objective")
+                    if obj is not None:
+                        na = obj.get('LensNA')
+                        if na:
+                            self.metadata["NumericalAperture"] = float(na)
+            except Exception:
+                pass
+
+            if not self.metadata.get("NumericalAperture") and ndpi_info:
+                self.metadata["NumericalAperture"] = (
+                    ndpi_info.get('NA') or ndpi_info.get('NumericalAperture')
+                )
+
+            if not self.metadata.get("NumericalAperture") and desc_str:
+                na_match = re.search(
+                    r'(?:NA|N\.A\.|Numerical\s?Aperture)[:\s=]+([0-9\.]+)',
+                    desc_str, re.IGNORECASE,
+                )
+                if na_match:
+                    self.metadata["NumericalAperture"] = float(na_match.group(1))
+
+            # ---- Magnification ----
+            mag = ndpi_info.get('Magnification')
+            if mag is not None:
+                self.metadata["Magnification"] = float(mag)
+            elif desc_str:
+                mag_match = re.search(r'(\d+)[xX]\b', desc_str)
+                if mag_match:
+                    self.metadata["Magnification"] = float(mag_match.group(1))
+
+            # ---- Compression ----
+            self.metadata["Compression"] = str(page.compression)
+
+            # ---- BitsPerPixel ----
+            self.metadata["BitsPerPixel"] = int(page.bitspersample * page.samplesperpixel)
+
+            # ---- DateAcquired ----
+            dt_tag = page.tags.get('DateTime')
+            if dt_tag:
+                self.metadata["DateAcquired"] = str(dt_tag.value).strip()
+            elif ndpi_info.get('DateTime'):
+                self.metadata["DateAcquired"] = ndpi_info['DateTime']
+
+            # ---- ScanTimeSeconds / FocusTimeSeconds ----
+            if ndpi_info.get('ScanTime'):
+                self.metadata["ScanTimeSeconds"] = float(ndpi_info['ScanTime'])
+            if ndpi_info.get('FocusTime'):
+                self.metadata["FocusTimeSeconds"] = float(ndpi_info['FocusTime'])
 
     def save_json(self, output_path):
         """Writes the dictionary to a BIDS-compliant JSON file."""
@@ -164,7 +237,11 @@ def main():
     parser.add_argument("--run", help="Run index")
     parser.add_argument("--chunk", help="Chunk label (e.g., A3)")
     parser.add_argument("--template", help="JSON template for metadata (optional, overrides defaults)")
-    
+    parser.add_argument(
+        "--meta", nargs="*", metavar="KEY=VALUE",
+        help='Override template metadata values, e.g. --meta BodyPartDetails=Hippocampus SampleFixation="formalin 20%%"'
+    )
+
     # Operational flags
     parser.add_argument("--convert", action="store_true", help="Convert NDPI to OME-TIFF via bfconvert")
     parser.add_argument("--dry_run", action="store_true", help="Perform a dry run without actually converting, printing intended actions instead")
@@ -172,12 +249,51 @@ def main():
 
     args = parser.parse_args()
 
+    # --- Parse --meta key=value pairs into a dict ---
+    meta_overrides = {}
+    if args.meta:
+        for item in args.meta:
+            if "=" not in item:
+                parser.error(f"Invalid --meta format '{item}'. Expected KEY=VALUE.")
+            key, value = item.split("=", 1)
+            meta_overrides[key] = value
+
     # --- 1. Setup Naming and Directory Logic ---
     entities = {k: v for k, v in vars(args).items() if v is not None}
     bids_namer = BIDS_micr_name(**entities)
     bids_rel_path = bids_namer.build()
     full_bids_base = os.path.join(args.bids, bids_rel_path)
-    
+
+    target_ndpi = f"{full_bids_base}.ndpi"
+    target_json = f"{full_bids_base}.json"
+    target_ome  = f"{full_bids_base}.ome.tif"
+
+    # --- Dry-run mode: print intended actions and exit ---
+    if args.dry_run:
+        print("=== DRY RUN ===")
+        print(f"  Source NDPI  : {args.ndpi_path}")
+        print(f"  BIDS root    : {args.bids}")
+        print(f"  Target NDPI  : {target_ndpi}")
+        print(f"  Target JSON  : {target_json}")
+        if args.convert:
+            print(f"  Target OME   : {target_ome}")
+        if args.force:
+            print("  Mode         : FORCE (overwrite existing files)")
+        if args.template:
+            print(f"  Template     : {args.template}")
+        if meta_overrides:
+            print(f"  Meta overrides: {meta_overrides}")
+        exists_ndpi = os.path.exists(target_ndpi)
+        exists_json = os.path.exists(target_json)
+        print(f"  NDPI exists  : {exists_ndpi}")
+        print(f"  JSON exists  : {exists_json}")
+        if exists_ndpi and not args.force:
+            print("  Action       : SKIP (target exists, use --force to overwrite)")
+        else:
+            print(f"  Action       : {'OVERWRITE' if exists_ndpi else 'COPY'} NDPI + write JSON sidecar")
+        print("=== END DRY RUN ===")
+        return
+
     # Define log location at the same level as /micr
     subject_session_root = os.path.dirname(os.path.dirname(full_bids_base))
     log_dir = os.path.join(subject_session_root, "log")
@@ -187,9 +303,9 @@ def main():
     log_name_parts = [f"sub-{args.sub}"]
     if args.ses: log_name_parts.append(f"ses-{args.ses}")
     log_name_parts.append("bids-micr.log")
-    
+
     log_file = os.path.join(log_dir, "_".join(log_name_parts))
-    
+
     # Configure logging to write to the new subject-specific file
     logging.basicConfig(
         level=logging.INFO,
@@ -202,8 +318,6 @@ def main():
     try:
         # Step 3: Directories and Copy
         os.makedirs(os.path.dirname(full_bids_base), exist_ok=True)
-        target_ndpi = f"{full_bids_base}.ndpi"
-        target_json = f"{full_bids_base}.json"
 
         if os.path.exists(target_ndpi) and not args.force:
             logging.info(f"SKIPPED: {target_ndpi} exists. Use --force to overwrite.")
@@ -215,14 +329,17 @@ def main():
 
         # Step 4: Metadata
         logging.info("Metadata: Extracting from headers...")
-        meta = BIDS_micr_metadata(target_ndpi)
+        meta = BIDS_micr_metadata(
+            target_ndpi,
+            template_path=args.template,
+            **meta_overrides,
+        )
         meta.fill_from_ndpi()
         meta.save_json(target_json)
         logging.info("Metadata: JSON sidecar saved.")
 
         # Step 5: Optional Conversion
         if args.convert:
-            target_ome = f"{full_bids_base}.ome.tif"
             if os.path.exists(target_ome) and not args.force:
                 logging.info("Conversion: OME-TIFF exists, skipping.")
             else:

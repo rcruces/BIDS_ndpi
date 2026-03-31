@@ -1,5 +1,15 @@
 # BIDS microscopy: ndpi
 
+<div align="left">
+[![Version](https://img.shields.io/github/v/tag/rcruces/BIDS_ndpi)](https://github.com/rcruces/BIDS_ndpi)
+[![Docker Image Version](https://img.shields.io/docker/v/micalab/BIDS_ndpi?color=blue&label=docker%20version)](https://hub.docker.com/r/micalab/BIDS_ndpi)
+[![Docker Pulls](https://img.shields.io/docker/pulls/micalab/BIDS_ndpi)](https://hub.docker.com/r/micalab/BIDS_ndpi)
+[![PyPI version](https://img.shields.io/pypi/v/BIDS_ndpi.svg)](https://pypi.org/project/BIDS_ndpi/)
+[![GitHub issues](https://img.shields.io/github/issues/rcruces/BIDS_ndpi?color=brightgreen)](https://github.com/rcruces/BIDS_ndpi/issues)
+[![GitHub stars](https://img.shields.io/github/stars/rcruces/BIDS_ndpi.svg?style=flat&label=%E2%AD%90%EF%B8%8F%20stars&color=brightgreen)](https://github.com/rcruces/BIDS_ndpi/stargazers)
+
+</div>
+
 Convert whole-slide images in `.ndpi` format to [Brain Imaging Data Structure (BIDS) microscopy](https://bids-specification.readthedocs.io/en/stable/modality-specific-files/microscopy.html) compliant datasets.
 
 ---
@@ -14,19 +24,23 @@ Convert whole-slide images in `.ndpi` format to [Brain Imaging Data Structure (B
 
 ```
 BIDS_ndpi/
-├── README.md
-├── Dockerfile
-├── environment.yml
+├── CHANGELOG.md
 ├── CITATION.cff
+├── Dockerfile
+├── LICENSE
+├── README.md
+├── boutiques
+│   └── ndpi2bids.json                  # Boutique descriptor 
+├── environment.yml
 ├── .gitignore
-├── ndpi2bids/
+├── ndpi2bids
 │   ├── __init__.py
-│   ├── ndpi2bids.json          # Boutique descriptor 
-│   └── ndpi2bids.py            # Main conversion script
-└── templates/
-    ├── stain-AT8_BF.json       # Stain-specific JSON sidecar template
-    ├── participants.json       # Participants metadata template
-    └── participants_description.json
+│   ├── ndpi2bids.py                    # Main conversion script
+│   └── templates
+│       ├── dataset_description.json
+│       ├── participants.json
+│       └── stain-AT8_BF.json           # Stain-specific JSON sidecar template
+└── pyproject.toml
 ```
 
 ---
