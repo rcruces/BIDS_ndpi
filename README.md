@@ -1,15 +1,18 @@
 # BIDS microscopy: ndpi
 
+---
+
 [![Version](https://img.shields.io/github/v/tag/rcruces/BIDS_ndpi)](https://github.com/rcruces/BIDS_ndpi)
-[![Docker Image Version](https://img.shields.io/docker/v/micalab/BIDS_ndpi?color=blue&label=docker%20version)](https://hub.docker.com/r/micalab/BIDS_ndpi)
-[![Docker Pulls](https://img.shields.io/docker/pulls/micalab/BIDS_ndpi)](https://hub.docker.com/r/micalab/BIDS_ndpi)
-[![PyPI version](https://img.shields.io/pypi/v/BIDS_ndpi.svg)](https://pypi.org/project/BIDS_ndpi/)
+[![Docker Image Version](https://img.shields.io/docker/v/micalab/ndpi2bids?color=blue&label=docker%20version)](https://hub.docker.com/r/micalab/BIDS_ndpi)
+[![Docker Pulls](https://img.shields.io/docker/pulls/micalab/ndpi2bids)](https://hub.docker.com/r/micalab/BIDS_ndpi)
 [![GitHub issues](https://img.shields.io/github/issues/rcruces/BIDS_ndpi?color=brightgreen)](https://github.com/rcruces/BIDS_ndpi/issues)
 [![GitHub stars](https://img.shields.io/github/stars/rcruces/BIDS_ndpi.svg?style=flat&label=%E2%AD%90%EF%B8%8F%20stars&color=brightgreen)](https://github.com/rcruces/BIDS_ndpi/stargazers)
+<!-- [![PyPI version](https://img.shields.io/pypi/v/BIDS_ndpi.svg)](https://pypi.org/project/BIDS_ndpi/) -->
 
 Convert whole-slide images in `.ndpi` format to [Brain Imaging Data Structure (BIDS) microscopy](https://bids-specification.readthedocs.io/en/stable/modality-specific-files/microscopy.html) compliant datasets.
+https://hub.docker.com/r/micalab/ndpi2bids
 
----
+
 
 ## Overview
 
@@ -22,7 +25,6 @@ Convert whole-slide images in `.ndpi` format to [Brain Imaging Data Structure (B
 ```
 BIDS_ndpi/
 ├── CHANGELOG.md
-├── CITATION.cff
 ├── Dockerfile
 ├── LICENSE
 ├── README.md
@@ -36,7 +38,8 @@ BIDS_ndpi/
 │   └── templates
 │       ├── dataset_description.json
 │       ├── participants.json
-│       └── stain-AT8_BF.json           # Stain-specific JSON sidecar template
+│       ├── stain-AT8_BF.json           # Stain-specific JSON sidecar template
+│       └── CITATION.cff
 └── pyproject.toml
 ```
 
@@ -45,7 +48,8 @@ BIDS_ndpi/
 ## Requirements
 
 - Docker (recommended), **or**
-- [Pixi](https://pixi.sh) / conda with the provided `environment.yml`
+- conda with the provided `environment.yml`
+- pip
 
 ---
 
@@ -65,7 +69,7 @@ docker run --rm \
   python ndpi2bids/ndpi2bids.py --input /input --output /output
 ```
 
-### With conda / pixi
+### With conda
 
 ```bash
 # Create environment
@@ -128,6 +132,7 @@ JSON templates in `./templates/` define stain-specific metadata injected into BI
 | `stain-AT8_BF.json` | Sidecar template for AT8 brightfield staining |
 | `participants.json` | Column definitions for `participants.tsv` |
 | `participants_description.json` | Dataset-level participant metadata |
+| `CITATION.cff` | Citation metadata for the dataset (authors, title, version, DOI) |
 
 To add a new stain, copy an existing template and update the fields, then pass it via `--template`.
 
@@ -137,6 +142,7 @@ To add a new stain, copy an existing template and update the fields, then pass i
 
 ```
 output/
+├── CITATION.cff
 ├── dataset_description.json
 ├── participants.tsv
 ├── participants.json
@@ -144,15 +150,9 @@ output/
 └── sub-<label>/
     └── ses-<label>/
         └── micr/
-            ├── sub-<label>_ses-<label>_stain-AT8_BF.ndpi
+            ├── sub-<label>_ses-<label>_stain-AT8_BF.ome.tif
             └── sub-<label>_ses-<label>_stain-AT8_BF.json
 ```
-
----
-
-## Citation
-
-If you use this tool, please cite it using the metadata in [`CITATION.cff`](./CITATION.cff).
 
 ---
 
