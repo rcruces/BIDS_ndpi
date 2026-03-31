@@ -226,6 +226,23 @@ def ensure_bids_root_files(bids_root):
             with open(dd_path, "w") as f:
                 json.dump(dd, f, indent=4)
 
+    # CITATION.cff
+    cff_path = os.path.join(bids_root, "CITATION.cff")
+    if not os.path.exists(cff_path):
+        template = os.path.join(
+            os.path.dirname(__file__), "templates", "CITATION.cff"
+        )
+        if os.path.isfile(template):
+            shutil.copy2(template, cff_path)
+
+    # README
+    readme_path = os.path.join(bids_root, "README")
+    if not os.path.exists(readme_path):
+        with open(readme_path, "w") as f:
+            f.write("# BIDS Microscopy Dataset\n\n"
+                    "This dataset follows the BIDS Microscopy extension (BEP031).\n\n"
+                    "See dataset_description.json for details.\n")
+
 # --- Execution Script ---
 
 def main():
