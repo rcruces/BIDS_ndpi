@@ -16,6 +16,7 @@ https://doi.org/10.3389/fnins.2022.871228
 import os
 import re
 import csv
+import glob
 import json
 import shutil
 import argparse
@@ -191,13 +192,15 @@ class BIDS_micr_metadata:
 
     def save_json(self, output_path):
         """Writes the dictionary to a BIDS-compliant JSON file."""
+        # QC: remove keys with None values
+        cleaned = {k: v for k, v in self.metadata.items() if v is not None}
         with open(output_path, 'w') as f:
-            json.dump(self.metadata, f, indent=4)
+            json.dump(cleaned, f, indent=4)
 
 # --- BIDS Root Files ---
-
-_BIDSIGNORE_CONTENT = """# Ignore log directories and validation output
-**/log/
+_BIDSIGNORE_CONTENT = """# Ignore log directories, raw NDPI files, and validation output
+**/log
+**/micr/*ndpi
 bids_validator_output.txt
 """
 
@@ -264,7 +267,7 @@ def ensure_bids_root_files(bids_root):
 def update_participants_tsv(bids_root, sub, group="PX"):
     """Add a participant row to participants.tsv if not already present."""
     pt_path = os.path.join(bids_root, "participants.tsv")
-    participant_id = f"sub-{sub}"
+    participant_id = f"{sub}"
 
     # Read existing rows
     existing_ids = set()
@@ -278,6 +281,22 @@ def update_participants_tsv(bids_root, sub, group="PX"):
         with open(pt_path, "a", newline="") as f:
             writer = csv.writer(f, delimiter="\t")
             writer.writerow([participant_id, group])
+
+
+def update_sessions_tsv(bids_root, sub):
+    """Create/update sub-{sub}_sessions.tsv from existing ses-* directories."""
+    sub_dir = os.path.join(bids_root, f"sub-{sub}")
+    sessions_tsv = os.path.join(sub_dir, f"sub-{sub}_sessions.tsv")
+
+    # Discover all ses-* directories under the subject
+    all_ses = sorted(glob.glob(os.path.join(sub_dir, "ses-*")))
+    all_ses = [os.path.basename(s)[4:] for s in all_ses if os.path.isdir(s)]
+
+    with open(sessions_tsv, "w", newline="") as f:
+        writer = csv.writer(f, delimiter="\t")
+        writer.writerow(["session_id"])
+        for ses in all_ses:
+            writer.writerow([ses])
 
 # --- Execution Script ---
 
@@ -297,7 +316,7 @@ def main():
     parser.add_argument("--acq", help="Acquisition label")
     parser.add_argument("--run", help="Run index")
     parser.add_argument("--chunk", help="Chunk label (e.g., A3)")
-    parser.add_argument("--group", default="PX", help="Group label for participants.tsv (default: PX)")
+    parser.add_argument("--keep_ndpi", action="store_true", help="Keep the original NDPI file after OME-TIFF conversion (default: delete it)")
     parser.add_argument("--template", help="JSON template for metadata (optional, overrides defaults)")
     parser.add_argument(
         "--meta", nargs="*", metavar="KEY=VALUE",
@@ -329,7 +348,9 @@ def main():
     # Ensure mandatory BIDS root files exist
     os.makedirs(args.bids, exist_ok=True)
     ensure_bids_root_files(args.bids)
-    update_participants_tsv(args.bids, args.sub, group=args.group)
+    update_participants_tsv(args.bids, args.sub)
+    if args.ses:
+        update_sessions_tsv(args.bids, args.sub)
 
     target_ndpi = f"{full_bids_base}.ndpi"
     target_json = f"{full_bids_base}.json"
@@ -417,9 +438,9 @@ def main():
                 )
                 if result.returncode == 0:
                     logging.info(f"Conversion: Success -> {target_ome}")
-                    # Remove the NDPI copy to avoid data duplication
-                    os.remove(target_ndpi)
-                    logging.info(f"Conversion: Removed duplicate NDPI -> {target_ndpi}")
+                    if not args.keep_ndpi:
+                        os.remove(target_ndpi)
+                        logging.info(f"Conversion: Removed NDPI -> {target_ndpi}")
                 else:
                     logging.error(f"Conversion: Failed -> {result.stderr}")
 
