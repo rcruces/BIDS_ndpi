@@ -261,13 +261,13 @@ def ensure_bids_root_files(bids_root):
     if not os.path.exists(pt_path):
         with open(pt_path, "w", newline="") as f:
             writer = csv.writer(f, delimiter="\t")
-            writer.writerow(["participant_id", "group"])
+            writer.writerow(["participant_id"])
 
 
-def update_participants_tsv(bids_root, sub, group="PX"):
+def update_participants_tsv(bids_root, sub):
     """Add a participant row to participants.tsv if not already present."""
     pt_path = os.path.join(bids_root, "participants.tsv")
-    participant_id = f"{sub}"
+    participant_id = f"sub-{sub}"
 
     # Read existing rows
     existing_ids = set()
@@ -280,7 +280,7 @@ def update_participants_tsv(bids_root, sub, group="PX"):
     if participant_id not in existing_ids:
         with open(pt_path, "a", newline="") as f:
             writer = csv.writer(f, delimiter="\t")
-            writer.writerow([participant_id, group])
+            writer.writerow([participant_id])
 
 
 def update_sessions_tsv(bids_root, sub):
