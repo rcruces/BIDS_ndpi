@@ -22,6 +22,8 @@ import shutil
 import argparse
 import subprocess
 import tifffile
+import time
+from datetime import datetime
 import logging
 import xml.etree.ElementTree as ET
 
@@ -261,13 +263,14 @@ def ensure_bids_root_files(bids_root):
     if not os.path.exists(pt_path):
         with open(pt_path, "w", newline="") as f:
             writer = csv.writer(f, delimiter="\t")
-            writer.writerow(["participant_id"])
+            writer.writerow(["participant_id", "date.added"])
 
 
 def update_participants_tsv(bids_root, sub):
     """Add a participant row to participants.tsv if not already present."""
     pt_path = os.path.join(bids_root, "participants.tsv")
     participant_id = f"sub-{sub}"
+    today = datetime.today().strftime('%m.%d.%Y')
 
     # Read existing rows
     existing_ids = set()
@@ -280,7 +283,7 @@ def update_participants_tsv(bids_root, sub):
     if participant_id not in existing_ids:
         with open(pt_path, "a", newline="") as f:
             writer = csv.writer(f, delimiter="\t")
-            writer.writerow([participant_id])
+            writer.writerow([participant_id, today])
 
 
 def update_sessions_tsv(bids_root, sub):
@@ -344,8 +347,13 @@ def main():
             key, value = item.split("=", 1)
             meta_overrides[key] = value
 
+    
+    # Timer & beginning
+    start_time = time.time()
+
     # --- 1. Setup Naming and Directory Logic ---
-    entities = {k: v for k, v in vars(args).items() if v is not None}
+    bids_entities = {"sub", "ses", "sample", "acq", "stain", "run", "chunk", "suffix"}
+    entities = {k: v for k, v in vars(args).items() if v is not None and k in bids_entities}
     bids_namer = BIDS_micr_name(**entities)
     bids_rel_path = bids_namer.build()
     full_bids_base = os.path.join(args.bids, bids_rel_path)
@@ -353,9 +361,6 @@ def main():
     # Ensure mandatory BIDS root files exist
     os.makedirs(args.bids, exist_ok=True)
     ensure_bids_root_files(args.bids)
-    update_participants_tsv(args.bids, args.sub)
-    if args.ses:
-        update_sessions_tsv(args.bids, args.sub)
 
     target_ndpi = f"{full_bids_base}.ndpi"
     target_json = f"{full_bids_base}.json"
@@ -386,6 +391,11 @@ def main():
             print(f"  Action       : {'OVERWRITE' if exists_ndpi else 'COPY'} NDPI + write JSON sidecar")
         print("=== END DRY RUN ===")
         return
+
+    # Update participants and sessions TSVs (skipped in dry-run)
+    update_participants_tsv(args.bids, args.sub)
+    if args.ses:
+        update_sessions_tsv(args.bids, args.sub)
 
     # Define log location at the same level as /micr
     subject_session_root = os.path.dirname(os.path.dirname(full_bids_base))
@@ -453,6 +463,19 @@ def main():
 
     except Exception as e:
         logging.error(f"STATUS: FAILED for sub-{args.sub} - {str(e)}")
+    
+    # Capture the end time
+    end_time = time.time()  # End time in seconds (wall time)
+
+    # Calculate the time difference in seconds
+    time_difference = end_time - start_time
+
+    # Convert the time difference to minutes
+    time_difference_minutes = time_difference / 60
+
+    # Format the time difference to 3 decimal places
+    formatted_time = f"{time_difference_minutes:.3f}"
+    logging.info(f"PROCESSING TIME: {formatted_time} minutes")
 
 if __name__ == "__main__":
     main()
