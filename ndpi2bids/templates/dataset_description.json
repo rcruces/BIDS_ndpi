@@ -1,6 +1,7 @@
 {
     "Name": "MICA microscopy",
-    "BIDSVersion": "2.0.3",
+    "BIDSVersion": "bids-specification 1.11.1",
+    "BIDSValidator": "deno bids-validator 2.0.11",
     "DatasetType": "raw",
     "License": "CC0 1.0 Universal",
     "Acknowledgements": "The authors thank all participants who took part in this study. Special thanks to the McConnell Brain Imaging Centre PET Unit",

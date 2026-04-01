@@ -1,8 +1,8 @@
 {
   "name": "ndpi2bids",
-  "tool-version": "0.1.0",
+  "tool-version": "0.1.1",
   "container-image": {
-    "image": "MICA-MNI/bids_ndpi:0.1.0",
+    "image": "MICA-MNI/bids_ndpi:0.1.1",
     "index": "docker://",
     "type": "singularity"
   },

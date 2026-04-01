@@ -40,3 +40,5 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 - Dockerfile: removed non-existent `kiki` dependency, switched to `pip install` with `pyproject.toml` (`21fda90`, 2026-03-31)
 - Fixed `build-backend` in `pyproject.toml` to `setuptools.build_meta`
+
+## [0.1.1] - 2026-April-1
