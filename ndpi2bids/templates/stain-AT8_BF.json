@@ -10,7 +10,7 @@
   "OtherAcquisitionParameters": "Digitized at 20x; interpreted by expert neuropathologist",
 
   "BodyPart": "BRAIN",
-  "BodyPartDetails": null,
+  "BodyPartDetails": "NA",
   "BodyPartDetailsOntology": "https://www.ebi.ac.uk/ols/ontologies/uberon",
   "SampleEnvironment": "ex vivo",
   "SampleEmbedding": "paraffin",

@@ -2,12 +2,5 @@
     "participant_id": {
       "LongName": "Participant identification label sub-",
       "Description": "Assigned identification number for a subject. No ‘sub-’"
-    },
-    "group": {
-      "LongName": "Group",
-      "Levels": {
-        "HC": "Healthy control",
-        "PX": "Epilepsy patient"
-      }
-  }
+    }
 }

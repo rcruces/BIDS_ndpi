@@ -301,9 +301,12 @@ def update_sessions_tsv(bids_root, sub):
 # --- Execution Script ---
 
 def main():
-    from ndpi2bids import __version__
+    try:
+        from ndpi2bids import __version__, __release_date__
+    except ImportError:
+        from __init__ import __version__, __release_date__
     parser = argparse.ArgumentParser(description="Convert NDPI files to BIDS Microscopy format (MNI Neuropathology).")
-    parser.add_argument("-v", "--version", action="version", version=f"%(prog)s {__version__}")
+    parser.add_argument("-v", "--version", action="version", version=f"\n%(prog)s {__version__} ({__release_date__})\n")
     
     # Mandatory BIDS arguments
     parser.add_argument("--ndpi_path", required=True, help="Path to raw Hamamatsu .ndpi file")
