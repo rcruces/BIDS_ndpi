@@ -1,1 +1,3 @@
 ndpi2bids/__pycache__
+dist/
+ndpi2bids.egg-info/
