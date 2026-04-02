@@ -3,11 +3,11 @@
 ---
 
 [![Version](https://img.shields.io/github/v/tag/rcruces/BIDS_ndpi)](https://github.com/rcruces/BIDS_ndpi)
+[![PyPI version](https://img.shields.io/pypi/v/ndpi2bids.svg)](https://pypi.org/project/ndpi2bids/)
 [![Docker Image Version](https://img.shields.io/docker/v/micalab/ndpi2bids?color=blue&label=docker%20version)](https://hub.docker.com/r/micalab/BIDS_ndpi)
 [![Docker Pulls](https://img.shields.io/docker/pulls/micalab/ndpi2bids)](https://hub.docker.com/r/micalab/BIDS_ndpi)
 [![GitHub issues](https://img.shields.io/github/issues/rcruces/BIDS_ndpi?color=brightgreen)](https://github.com/rcruces/BIDS_ndpi/issues)
 [![GitHub stars](https://img.shields.io/github/stars/rcruces/BIDS_ndpi.svg?style=flat&label=%E2%AD%90%EF%B8%8F%20stars&color=brightgreen)](https://github.com/rcruces/BIDS_ndpi/stargazers)
-<!-- [![PyPI version](https://img.shields.io/pypi/v/BIDS_ndpi.svg)](https://pypi.org/project/BIDS_ndpi/) -->
 
 Convert whole-slide images in `.ndpi` format to [Brain Imaging Data Structure (BIDS) microscopy](https://bids-specification.readthedocs.io/en/stable/modality-specific-files/microscopy.html) compliant datasets.
 https://hub.docker.com/r/micalab/ndpi2bids
