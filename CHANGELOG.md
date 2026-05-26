@@ -3,7 +3,24 @@
 All notable changes to this project will be documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## v0.1.2 (2026-05-26)
+
+### Changed
+- Bumped project version from 0.1.1 to 0.1.2 across package metadata, Docker image labels, and Boutiques descriptors.
+- Updated release date metadata.
+- Updated container image reference to `MICA-MNI/bids_ndpi:0.1.2`.
+- Corrected author ORCID in `CITATION.cff`.
+- Updated default dataset license from CC0 1.0 Universal to CC BY-NC 4.0.
+- Expanded funding acknowledgements to include Brain Canada Foundation (2025) support.
+- Synchronized version information across:
+  - `pyproject.toml`
+  - `ndpi2bids/__init__.py`
+  - `Dockerfile`
+  - `boutiques/ndpi2bids.json`
+
+### Documentation
+
+- Updated citation and dataset metadata templates to reflect current project information and licensing.
 
 ## [alpha.0.1.0] - 2026-March-27
 ### Added
