@@ -24,7 +24,7 @@ FROM python:3.11-slim-bookworm AS runtime
 
 LABEL maintainer="raul.rodriguezcruces@mcgill.ca"
 LABEL description="NDPI to BIDS converter"
-LABEL version="0.1.1"
+LABEL version="0.1.2"
 
 # openjdk-17-jre: required by bfconvert
 # libtiff6 / libopenjp2-7: tifffile native support
