@@ -10,13 +10,16 @@
 [![GitHub stars](https://img.shields.io/github/stars/rcruces/BIDS_ndpi.svg?style=flat&label=%E2%AD%90%EF%B8%8F%20stars&color=brightgreen)](https://github.com/rcruces/BIDS_ndpi/stargazers)
 
 Convert whole-slide images in `.ndpi` format to [Brain Imaging Data Structure (BIDS) microscopy](https://bids-specification.readthedocs.io/en/stable/modality-specific-files/microscopy.html) compliant datasets.
-https://hub.docker.com/r/micalab/ndpi2bids
-
 
 
 ## Overview
 
 `BIDS_ndpi` automates the conversion of Hamamatsu `.ndpi` whole-slide microscopy images into a BIDS-compliant directory structure, generating the required JSON sidecars, `participants.tsv`, and metadata files along the way.
+
+### Links
+DockerHub: (micalab/ndpi2bids)[https://hub.docker.com/r/micalab/ndpi2bids]
+Pypi project: (ndpi2bids/0.1.2)[https://pypi.org/project/ndpi2bids/0.1.2/]
+Github repo: (BIDS_ndpi)[https://github.com/rcruces/BIDS_ndpi]
 
 ---
 
